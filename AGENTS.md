@@ -1,5 +1,8 @@
 # QChoice AI Collaboration Guidelines for SQL教學文件專案 (AI Agents Overview)
 
+- 使用 `source ~/.zshrc` 來載入環境變數
+- 使用 `conda activate fju` 來啟動 Python 環境
+
 ## 專案概述 (Project Overview)
 本專案為 SQL 與 AI 大數據情境處理教學文件專案，旨在提供完整的 SQL 教學內容與 AI 整合示範。本文件說明各個 AI Agent 的角色分工與協作方式。
 

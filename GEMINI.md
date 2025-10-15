@@ -1,5 +1,8 @@
 # QChoice AI Collaboration Guidelines for SQL教學文件專案 (Gemini Version)
 
+- 使用 `source ~/.zshrc` 來載入環境變數
+- 使用 `conda activate fju` 來啟動 Python 環境
+
 ## 專案概述 (Project Overview)
 本專案為 SQL 與 AI 大數據情境處理教學文件專案，旨在提供完整的 SQL 教學內容與 AI 整合示範。Gemini 在此專案中擔任快速資訊搜尋、多模態內容處理與實時網路查詢的角色。
 
