@@ -1,0 +1,320 @@
+openapi: 3.0.3
+info:
+  title: PySpark SQL 教學 API 規格
+  description: |
+    定義 PySpark SQL 教學文件的結構與內容規格
+    包含 50 個 SQL 核心概念的教學內容與互動式 Notebook 介面
+  version: 1.0.0
+  contact:
+    name: QChoice AI 教學團隊
+    email: green07111@noreply.github.com
+
+tags:
+  - name: Notebook
+    description: Jupyter Notebook 教學文件相關操作
+  - name: SQLConcepts
+    description: SQL 概念教學內容
+  - name: Examples
+    description: 程式碼範例與 AI Prompt
+
+paths:
+  /notebook/structure:
+    get:
+      tags:
+        - Notebook
+      summary: 取得 Notebook 結構資訊
+      description: 返回 Notebook 的章節結構、單元格數量等資訊
+      responses:
+        '200':
+          description: 成功取得 Notebook 結構
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotebookStructure'
+
+  /notebook/cells:
+    get:
+      tags:
+        - Notebook
+      summary: 取得所有教學單元格
+      description: 返回 Notebook 中所有的教學單元格內容
+      responses:
+        '200':
+          description: 成功取得單元格列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotebookCell'
+
+  /sql-concepts:
+    get:
+      tags:
+        - SQLConcepts
+      summary: 取得所有 SQL 概念清單
+      description: 返回教學文件涵蓋的 50 個 SQL 概念
+      responses:
+        '200':
+          description: 成功取得 SQL 概念清單
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SQLConcept'
+
+  /sql-concepts/{conceptId}:
+    get:
+      tags:
+        - SQLConcepts
+      summary: 取得特定 SQL 概念的詳細內容
+      description: 返回指定 SQL 概念的說明、範例和 AI Prompt
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: SQL 概念 ID (1-50)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+      responses:
+        '200':
+          description: 成功取得概念內容
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SQLConceptDetail'
+        '404':
+          description: 找不到指定的概念
+
+  /examples/{conceptId}/prompt:
+    get:
+      tags:
+        - Examples
+      summary: 取得 AI Prompt 範例
+      description: 返回指定 SQL 概念的 AI Prompt 範例文字
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: SQL 概念 ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得 AI Prompt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIPrompt'
+
+  /examples/{conceptId}/code:
+    get:
+      tags:
+        - Examples
+      summary: 取得程式碼範例
+      description: 返回指定 SQL 概念的可執行程式碼範例
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: SQL 概念 ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功取得程式碼範例
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeExample'
+
+components:
+  schemas:
+    NotebookStructure:
+      type: object
+      required:
+        - filename
+        - totalCells
+        - chapters
+      properties:
+        filename:
+          type: string
+          example: "2025_pyspark_sql_course.ipynb"
+          description: Notebook 檔案名稱
+        totalCells:
+          type: integer
+          example: 150
+          description: 總單元格數量
+        chapters:
+          type: array
+          description: 章節列表
+          items:
+            $ref: '#/components/schemas/Chapter'
+
+    Chapter:
+      type: object
+      required:
+        - chapterNumber
+        - title
+        - concepts
+      properties:
+        chapterNumber:
+          type: integer
+          example: 1
+          description: 章節編號
+        title:
+          type: string
+          example: "基礎查詢操作"
+          description: 章節標題
+        concepts:
+          type: array
+          description: 該章節包含的 SQL 概念
+          items:
+            type: string
+
+    NotebookCell:
+      type: object
+      required:
+        - cellType
+        - content
+      properties:
+        cellType:
+          type: string
+          enum: [markdown, code]
+          description: 單元格類型
+        content:
+          type: string
+          description: 單元格內容
+        execution_count:
+          type: integer
+          nullable: true
+          description: 執行次數（僅程式碼單元格）
+
+    SQLConcept:
+      type: object
+      required:
+        - id
+        - name
+        - nameEn
+        - description
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: 概念 ID (1-50)
+        name:
+          type: string
+          example: "SELECT"
+          description: SQL 指令名稱
+        nameEn:
+          type: string
+          example: "SELECT"
+          description: 英文名稱
+        description:
+          type: string
+          example: "從資料庫拿出資料（就像從玩具箱拿玩具）"
+          description: 生活化的概念說明
+        chapter:
+          type: integer
+          example: 1
+          description: 所屬章節編號
+
+    SQLConceptDetail:
+      allOf:
+        - $ref: '#/components/schemas/SQLConcept'
+        - type: object
+          required:
+            - explanation
+            - aiPrompt
+            - codeExample
+          properties:
+            explanation:
+              type: string
+              description: 詳細的概念解釋（使用生活化比喻）
+            aiPrompt:
+              $ref: '#/components/schemas/AIPrompt'
+            codeExample:
+              $ref: '#/components/schemas/CodeExample'
+            relatedConcepts:
+              type: array
+              description: 相關的 SQL 概念
+              items:
+                type: integer
+
+    AIPrompt:
+      type: object
+      required:
+        - text
+        - language
+      properties:
+        text:
+          type: string
+          example: "請幫我寫一個 PySpark 程式，從玩具資料表中選取所有玩具的名稱和顏色，並顯示前5筆資料。"
+          description: AI Prompt 文字內容
+        language:
+          type: string
+          enum: [zh-TW, en]
+          default: zh-TW
+          description: 語言
+        category:
+          type: string
+          example: "基礎查詢"
+          description: 分類
+
+    CodeExample:
+      type: object
+      required:
+        - code
+        - language
+        - executable
+      properties:
+        code:
+          type: string
+          description: 程式碼內容
+        language:
+          type: string
+          enum: [python, sql]
+          description: 程式語言
+        executable:
+          type: boolean
+          default: true
+          description: 是否可直接執行
+        expectedOutput:
+          type: string
+          description: 預期輸出
+        dependencies:
+          type: array
+          description: 相依的程式碼區塊
+          items:
+            type: string
+
+    TestCase:
+      type: object
+      required:
+        - testName
+        - description
+        - testType
+      properties:
+        testName:
+          type: string
+          example: "test_notebook_exists"
+          description: 測試案例名稱
+        description:
+          type: string
+          example: "驗證 Notebook 檔案存在"
+          description: 測試說明
+        testType:
+          type: string
+          enum: [unit, integration, functional]
+          description: 測試類型
+        conceptId:
+          type: integer
+          nullable: true
+          description: 關聯的 SQL 概念 ID
+
+servers:
+  - url: http://localhost:8888
+    description: 本地 Jupyter Notebook 伺服器
