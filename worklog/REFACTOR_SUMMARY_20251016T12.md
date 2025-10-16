@@ -18,11 +18,6 @@
 
 ### 3. 練習題分布
 
-#### 2024大數據情境處理介紹_SQL與AI.ipynb
-1. SparkSession 建立練習
-2. 資料表結構定義練習（StructType）
-3. SQL 語法建立資料表練習
-
 #### 2025_pyspark_sql_course.ipynb
 1. 書籍資料 DataFrame 建立與 SELECT 查詢
 2. INSERT - 新增資料練習
