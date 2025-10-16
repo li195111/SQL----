@@ -51,19 +51,21 @@ toys_data = [
     (5, "小汽車", "紅色", 199)
 ]
 toys_df = spark.createDataFrame(toys_data, ["id", "名稱", "顏色", "價格"])
-# SQL 方式 1：使用 SQL 語法
 toys_df.createOrReplaceTempView("toys")
-
 # %% [md]
 ##### 📌 範例 1: SELECT - 選取玩具名稱和顏色")
 
-
 # %%
+print("📌 玩具資料表內容：")
+toys_df.show()
+
+# SQL 方式 1：使用 SQL 語法
 result = spark.sql("SELECT `名稱`, `顏色` FROM toys")
+print("📌 使用 SQL 語法的結果：")
 result.show()
 
 # PySpark DataFrame 方式（另一種寫法）
-result2 = toys_df.select("名稱", "顏色")
+result2 = toys_df.select("名稱", "價格")
 print("📌 使用 DataFrame API 的結果：")
 result2.show()
 
@@ -78,19 +80,23 @@ result2.show()
 # 請幫我寫一個 PySpark 程式，將一個新玩具「泰迪熊」新增到玩具資料表中，
 # 顏色是「白色」，價格是 450 元。
 
+##### 📌 範例 2: INSERT - 新增新玩具
 # %% 
+print("📌 玩具資料表內容：")
+toys_df.show()
+
 # 新玩具資料
 new_toy = [(6, "泰迪熊", "白色", 450)]
 new_toy_df = spark.createDataFrame(new_toy, ["id", "名稱", "顏色", "價格"])
+print("📌 新增的玩具資料：")
+new_toy_df.show()
 
 # 合併資料（模擬 INSERT）
-toys_df = toys_df.union(new_toy_df)
-toys_df.createOrReplaceTempView("toys")
+union_toys_df = toys_df.union(new_toy_df)
+union_toys_df.createOrReplaceTempView("toys")
+print("📌 新玩具已新增到資料表中！")
+union_toys_df.show()
 
-# %% [md]
-##### 📌 範例 2: INSERT - 新增新玩具
-
-# %%
 spark.sql("SELECT * FROM toys").show()
 
 # %% [md]
