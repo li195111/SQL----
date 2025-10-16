@@ -52,8 +52,12 @@ toys_data = [
 ]
 toys_df = spark.createDataFrame(toys_data, ["id", "名稱", "顏色", "價格"])
 toys_df.createOrReplaceTempView("toys")
+
+print("📌 玩具資料表內容：")
+toys_df.show()
+
 # %% [md]
-##### 📌 範例 1: SELECT - 選取玩具名稱和顏色")
+##### 📌 範例 1: SELECT - 選取玩具名稱和顏色
 
 # %%
 print("📌 玩具資料表內容：")
@@ -114,11 +118,17 @@ spark.sql("SELECT * FROM toys").show()
 ##### 📌 範例 3: UPDATE - 更新小熊的價格
 
 # %%
-toys_df = toys_df.withColumn(
+print("📌 玩具資料表內容：")
+toys_df.show()
+
+updated_toys_df = toys_df.withColumn(
     "價格",
     when(col("名稱") == "小熊", 350).otherwise(col("價格"))
 )
-toys_df.createOrReplaceTempView("toys")
+# 更新後重新建立臨時視圖
+updated_toys_df.createOrReplaceTempView("toys")
+
+print("📌 小熊的價格已更新！")
 spark.sql("SELECT * FROM toys WHERE `名稱` = '小熊'").show()
 
 # %% [md]
@@ -134,9 +144,15 @@ spark.sql("SELECT * FROM toys WHERE `名稱` = '小熊'").show()
 ##### 📌 範例 4: DELETE - 刪除便宜的玩具
 
 # %%
+print("📌 玩具資料表內容：")
+toys_df.show()
+
 # 使用 filter 保留價格 >= 200 的玩具
-toys_df = toys_df.filter(col("價格") >= 200)
-toys_df.createOrReplaceTempView("toys")
+deleted_toys_df = toys_df.filter(col("價格") >= 200)
+
+deleted_toys_df.createOrReplaceTempView("toys")
+
+print("📌 價格低於 200 元的玩具已刪除！")
 spark.sql("SELECT * FROM toys").show()
 
 # %% [md]
@@ -259,7 +275,7 @@ print("✅ 已刪除 old_toys 臨時視圖")
 try:
     spark.sql("SELECT * FROM old_toys").show()
 except Exception as e:
-    print(f"✅ 確認已刪除：{e}")
+    print(f"✅ 確認已刪除：(錯誤訊息)\n{e}")
 
 # %% [md]
 #### 9️⃣ ALTER TABLE - 修改資料表（改造盒子）
