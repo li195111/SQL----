@@ -910,4 +910,4 @@ percent_result.orderBy("薪資").select("姓名", "薪資", "薪資百分位", "
 # 關閉 Spark Session
 
 # %%
-spark.stop()
+# spark.stop()
