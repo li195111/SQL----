@@ -81,13 +81,13 @@ result.orderBy("部門", "部門排名").show()
 employees_df.createOrReplaceTempView("employees")
 sql_result = spark.sql("""
     SELECT 
-        員工編號,
-        姓名,
-        部門,
-        薪資,
-        ROW_NUMBER() OVER (PARTITION BY 部門 ORDER BY 薪資 DESC) as 部門排名
+        `員工編號`,
+        `姓名`,
+        `部門`,
+        `薪資`,
+        ROW_NUMBER() OVER (PARTITION BY `部門` ORDER BY `薪資` DESC) as `部門排名`
     FROM employees
-    ORDER BY 部門, 部門排名
+    ORDER BY `部門`, `部門排名`
 """)
 print("\nSQL 寫法結果：")
 sql_result.show()
@@ -250,24 +250,24 @@ orders_df.createOrReplaceTempView("orders")
 sql_with_cte = spark.sql("""
     WITH customer_stats AS (
         SELECT 
-            客戶,
-            COUNT(*) as 訂單數,
-            SUM(金額) as 總消費,
-            AVG(金額) as 平均消費
+            `客戶`,
+            COUNT(*) as `訂單數`,
+            SUM(`金額`) as `總消費`,
+            AVG(`金額`) as `平均消費`
         FROM orders
-        GROUP BY 客戶
+        GROUP BY `客戶`
     ),
     high_value_customers AS (
         SELECT 
-            客戶,
-            訂單數,
-            總消費,
-            ROUND(平均消費, 2) as 平均消費
+            `客戶`,
+            `訂單數`,
+            `總消費`,
+            ROUND(`平均消費`, 2) as `平均消費`
         FROM customer_stats
-        WHERE 總消費 > 5000
+        WHERE `總消費` > 5000
     )
     SELECT * FROM high_value_customers
-    ORDER BY 總消費 DESC
+    ORDER BY `總消費` DESC
 """)
 
 print("\n高價值客戶分析（使用 CTE）：")
@@ -292,38 +292,38 @@ sql_multi_cte = spark.sql("""
     WITH monthly_sales AS (
         -- 第一層：計算每個客戶的月度銷售
         SELECT 
-            客戶,
-            DATE_FORMAT(TO_DATE(訂單日期), 'yyyy-MM') as 月份,
-            SUM(金額) as 月銷售額
+            `客戶`,
+            DATE_FORMAT(TO_DATE(`訂單日期`), 'yyyy-MM') as `月份`,
+            SUM(`金額`) as `月銷售額`
         FROM orders
-        GROUP BY 客戶, DATE_FORMAT(TO_DATE(訂單日期), 'yyyy-MM')
+        GROUP BY `客戶`, DATE_FORMAT(TO_DATE(`訂單日期`), 'yyyy-MM')
     ),
     customer_summary AS (
         -- 第二層：匯總客戶統計
         SELECT 
-            客戶,
-            COUNT(DISTINCT 月份) as 活躍月數,
-            SUM(月銷售額) as 總銷售額,
-            AVG(月銷售額) as 平均月銷售額
+            `客戶`,
+            COUNT(DISTINCT `月份`) as `活躍月數`,
+            SUM(`月銷售額`) as `總銷售額`,
+            AVG(`月銷售額`) as `平均月銷售額`
         FROM monthly_sales
-        GROUP BY 客戶
+        GROUP BY `客戶`
     ),
     customer_level AS (
         -- 第三層：客戶分級
         SELECT 
-            客戶,
-            活躍月數,
-            ROUND(總銷售額, 2) as 總銷售額,
-            ROUND(平均月銷售額, 2) as 平均月銷售額,
+            `客戶`,
+            `活躍月數`,
+            ROUND(`總銷售額`, 2) as `總銷售額`,
+            ROUND(`平均月銷售額`, 2) as `平均月銷售額`,
             CASE 
-                WHEN 總銷售額 >= 6000 THEN '白金客戶'
-                WHEN 總銷售額 >= 4000 THEN '金牌客戶'
+                WHEN `總銷售額` >= 6000 THEN '白金客戶'
+                WHEN `總銷售額` >= 4000 THEN '金牌客戶'
                 ELSE '一般客戶'
-            END as 客戶等級
+            END as `客戶等級`
         FROM customer_summary
     )
     SELECT * FROM customer_level
-    ORDER BY 總銷售額 DESC
+    ORDER BY `總銷售額` DESC
 """)
 
 print("\n客戶分級結果：")
@@ -352,19 +352,19 @@ print("\n📌 範例 7: 子查詢優化 - 找出高於部門平均薪資的員�
 # 方法 1：使用相關子查詢（較慢）
 sql_correlated = spark.sql("""
     SELECT 
-        e1.姓名,
-        e1.部門,
-        e1.薪資,
-        (SELECT AVG(e2.薪資) 
+        e1.`姓名`,
+        e1.`部門`,
+        e1.`薪資`,
+        (SELECT AVG(e2.`薪資`) 
          FROM employees e2 
-         WHERE e2.部門 = e1.部門) as 部門平均薪資
+         WHERE e2.`部門` = e1.`部門`) as `部門平均薪資`
     FROM employees e1
-    WHERE e1.薪資 > (
-        SELECT AVG(e2.薪資) 
+    WHERE e1.`薪資` > (
+        SELECT AVG(e2.`薪資`) 
         FROM employees e2 
-        WHERE e2.部門 = e1.部門
+        WHERE e2.`部門` = e1.`部門`
     )
-    ORDER BY e1.部門, e1.薪資 DESC
+    ORDER BY e1.`部門`, e1.`薪資` DESC
 """)
 
 print("\n方法 1 - 相關子查詢：")
@@ -373,19 +373,19 @@ sql_correlated.show()
 # 方法 2：使用 JOIN（較快）
 sql_join = spark.sql("""
     WITH dept_avg AS (
-        SELECT 部門, AVG(薪資) as 平均薪資
+        SELECT `部門`, AVG(`薪資`) as `平均薪資`
         FROM employees
-        GROUP BY 部門
+        GROUP BY `部門`
     )
     SELECT 
-        e.姓名,
-        e.部門,
-        e.薪資,
-        ROUND(d.平均薪資, 2) as 部門平均薪資
+        e.`姓名`,
+        e.`部門`,
+        e.`薪資`,
+        ROUND(d.`平均薪資`, 2) as `部門平均薪資`
     FROM employees e
-    JOIN dept_avg d ON e.部門 = d.部門
-    WHERE e.薪資 > d.平均薪資
-    ORDER BY e.部門, e.薪資 DESC
+    JOIN dept_avg d ON e.`部門` = d.`部門`
+    WHERE e.`薪資` > d.`平均薪資`
+    ORDER BY e.`部門`, e.`薪資` DESC
 """)
 
 print("\n方法 2 - 使用 JOIN（推薦）：")
@@ -463,12 +463,12 @@ emp_manager_df.createOrReplaceTempView("emp_manager")
 # 使用 SELF JOIN 查詢員工和其主管
 sql_self_join = spark.sql("""
     SELECT 
-        e.員工編號,
-        e.姓名 as 員工姓名,
-        COALESCE(m.姓名, '無主管') as 主管姓名
+        e.`員工編號`,
+        e.`姓名` as `員工姓名`,
+        COALESCE(m.`姓名`, '無主管') as `主管姓名`
     FROM emp_manager e
-    LEFT JOIN emp_manager m ON e.主管編號 = m.員工編號
-    ORDER BY e.員工編號
+    LEFT JOIN emp_manager m ON e.`主管編號` = m.`員工編號`
+    ORDER BY e.`員工編號`
 """)
 
 print("\n員工與主管關係：")
@@ -664,13 +664,13 @@ employees_df.createOrReplaceTempView("employees")
 
 pivot_result = spark.sql("""
     SELECT * FROM (
-        SELECT 部門, 薪資
+        SELECT `部門`, `薪資`
         FROM employees
     )
     PIVOT (
-        COUNT(*) as 人數,
-        AVG(薪資) as 平均薪資
-        FOR 部門 IN ('工程部', '行銷部', '人資部')
+        COUNT(*) as `人數`,
+        AVG(`薪資`) as `平均薪資`
+        FOR `部門` IN ('工程部', '行銷部', '人資部')
     )
 """)
 
@@ -702,8 +702,8 @@ quarterly_sales.createOrReplaceTempView("quarterly_sales")
 
 # 使用 UNPIVOT（Spark 3.4+）或使用 stack 函數
 unpivot_result = quarterly_sales.selectExpr(
-    "產品",
-    "stack(4, 'Q1', Q1, 'Q2', Q2, 'Q3', Q3, 'Q4', Q4) as (季度, 銷售額)"
+    "`產品`",
+    "stack(4, 'Q1', `Q1`, 'Q2', `Q2`, 'Q3', `Q3`, 'Q4', `Q4`) as (`季度`, `銷售額`)"
 )
 
 print("\n轉換為長表格式：")
