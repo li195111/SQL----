@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PySpark SQL 超簡單教學 - 像教5歲小孩一樣學SQL！🎈
+PySpark SQL 超簡單教學 🎈
 =================================================
 
 這份教學會用最簡單的方式，教你如何使用 PySpark 來學習 SQL。
@@ -59,7 +59,7 @@ toys_df = spark.createDataFrame(toys_data, ["id", "名稱", "顏色", "價格"])
 
 # SQL 方式 1：使用 SQL 語法
 toys_df.createOrReplaceTempView("toys")
-result = spark.sql("SELECT 名稱, 顏色 FROM toys")
+result = spark.sql("SELECT `名稱`, `顏色` FROM toys")
 print("\n📌 範例 1: SELECT - 選取玩具名稱和顏色")
 result.show()
 
@@ -116,7 +116,7 @@ toys_df = toys_df.withColumn(
     when(col("名稱") == "小熊", 350).otherwise(col("價格"))
 )
 toys_df.createOrReplaceTempView("toys")
-spark.sql("SELECT * FROM toys WHERE 名稱 = '小熊'").show()
+spark.sql("SELECT * FROM toys WHERE `名稱` = '小熊'").show()
 
 
 # ----------------------------------------------------------------------------
@@ -155,13 +155,28 @@ CREATE DATABASE 就像蓋一個全新的倉庫來放你的東西
 
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，建立一個名為「toy_warehouse」的資料庫。
+
+⚠️ 注意：PySpark 預設不支援 CREATE DATABASE（需要 Hive）
+在 PySpark 中，我們使用臨時視圖（Temp Views）來組織資料
 """
 
-print("\n📌 範例 5: CREATE DATABASE - 建立資料庫")
+print("\n📌 範例 5: CREATE DATABASE - 建立資料庫（概念說明）")
 
-# 在 PySpark 中建立資料庫
-spark.sql("CREATE DATABASE IF NOT EXISTS toy_warehouse")
-spark.sql("SHOW DATABASES").show()
+# 在 PySpark 中，我們不需要建立資料庫
+# 直接使用臨時視圖即可
+print("""
+在標準 SQL 中：
+  CREATE DATABASE toy_warehouse
+
+在 PySpark 中：
+  使用臨時視圖來組織資料，不需要明確建立資料庫
+  臨時視圖會自動在 'default' 命名空間中
+  
+如果需要資料庫功能，可以：
+  1. 使用 Hive：設定 spark.sql.catalogImplementation=hive
+  2. 使用 Delta Lake：提供更強大的資料管理功能
+  3. 使用檔案系統：直接儲存為 Parquet/CSV 等格式
+""")
 
 
 # ----------------------------------------------------------------------------
@@ -176,22 +191,30 @@ CREATE TABLE 就像準備一個有格子的盒子
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，建立一個「學生成績」資料表，
 包含學生姓名、科目、分數三個欄位。
+
+⚠️ 注意：PySpark 預設不支援 CREATE TABLE DDL 語法（需要 Hive）
+我們使用 DataFrame 來模擬建立資料表的效果
 """
 
-print("\n📌 範例 6: CREATE TABLE - 建立資料表")
+print("\n📌 範例 6: CREATE TABLE - 建立資料表（使用 DataFrame）")
 
-# 定義資料表結構
-spark.sql("""
-    CREATE TABLE IF NOT EXISTS toy_warehouse.students (
-        id INT,
-        name STRING,
-        subject STRING,
-        score INT
-    )
-""")
+# 方法 1：使用 DataFrame 定義結構並建立臨時視圖
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 
-# 顯示資料表
-spark.sql("SHOW TABLES IN toy_warehouse").show()
+students_schema = StructType([
+    StructField("id", IntegerType(), True),
+    StructField("name", StringType(), True),
+    StructField("subject", StringType(), True),
+    StructField("score", IntegerType(), True)
+])
+
+# 建立空的 DataFrame 作為「資料表」
+students_df = spark.createDataFrame([], students_schema)
+students_df.createOrReplaceTempView("students")
+
+print("✅ 已建立 students 臨時視圖（類似資料表）")
+print("資料表結構：")
+students_df.printSchema()
 
 
 # ----------------------------------------------------------------------------
@@ -206,15 +229,26 @@ DROP DATABASE 就像把整個倉庫拆掉
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，刪除名為「old_warehouse」的資料庫。
 （注意：會刪除所有裡面的資料表）
+
+⚠️ 注意：PySpark 預設不支援 CREATE/DROP DATABASE（需要 Hive）
+這裡僅作為概念說明
 """
 
-print("\n📌 範例 7: DROP DATABASE - 刪除資料庫（示範）")
+print("\n📌 範例 7: DROP DATABASE - 刪除資料庫（概念說明）")
 
-# 先建立一個測試用的資料庫
-spark.sql("CREATE DATABASE IF NOT EXISTS old_warehouse")
-# 再刪除它
-spark.sql("DROP DATABASE IF EXISTS old_warehouse")
-print("✅ 資料庫已刪除")
+# 在 PySpark 中，我們使用臨時視圖而非資料庫
+# 概念說明：
+print("""
+在標準 SQL 中：
+  DROP DATABASE IF EXISTS old_warehouse
+
+在 PySpark 中：
+  使用臨時視圖（Temp Views）來組織資料
+  可以透過命名規則來模擬資料庫分組，例如：
+  - db1_table1
+  - db1_table2
+  - db2_table1
+""")
 
 
 # ----------------------------------------------------------------------------
@@ -228,15 +262,27 @@ DROP TABLE 就像把一個盒子整個丟掉
 
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，刪除「舊玩具」資料表。
+
+⚠️ 注意：在 PySpark 中，我們使用 dropTempView 來刪除臨時視圖
 """
 
-print("\n📌 範例 8: DROP TABLE - 刪除資料表")
+print("\n📌 範例 8: DROP TABLE - 刪除資料表（使用 dropTempView）")
 
-# 建立測試用資料表
-spark.sql("CREATE TABLE IF NOT EXISTS old_toys (id INT, name STRING)")
-# 刪除它
-spark.sql("DROP TABLE IF EXISTS old_toys")
-print("✅ 資料表已刪除")
+# 先建立一個測試用的臨時視圖
+test_data = [(1, "舊玩具")]
+test_df = spark.createDataFrame(test_data, ["id", "name"])
+test_df.createOrReplaceTempView("old_toys")
+print("✅ 已建立 old_toys 臨時視圖")
+
+# 刪除臨時視圖
+spark.catalog.dropTempView("old_toys")
+print("✅ 已刪除 old_toys 臨時視圖")
+
+# 驗證是否已刪除
+try:
+    spark.sql("SELECT * FROM old_toys").show()
+except Exception as e:
+    print(f"✅ 確認已刪除：{type(e).__name__}")
 
 
 # ----------------------------------------------------------------------------
@@ -368,7 +414,7 @@ INNER JOIN 就像找兩個朋友都有的玩具
 print("\n📌 範例 13: INNER JOIN - 兩邊都有的才留下")
 
 result = spark.sql("""
-    SELECT s.姓名, sc.科目, sc.分數
+    SELECT s.`姓名`, sc.`科目`, sc.`分數`
     FROM students s
     INNER JOIN scores sc ON s.id = sc.student_id
 """)
@@ -391,7 +437,7 @@ LEFT JOIN 就像以左邊（第一個）表格為主
 print("\n📌 範例 14: LEFT JOIN - 保留所有學生")
 
 result = spark.sql("""
-    SELECT s.姓名, sc.科目, sc.分數
+    SELECT s.`姓名`, sc.`科目`, sc.`分數`
     FROM students s
     LEFT JOIN scores sc ON s.id = sc.student_id
 """)
@@ -415,7 +461,7 @@ RIGHT JOIN 就像以右邊（第二個）表格為主
 print("\n📌 範例 15: RIGHT JOIN - 保留所有成績")
 
 result = spark.sql("""
-    SELECT s.姓名, sc.科目, sc.分數
+    SELECT s.`姓名`, sc.`科目`, sc.`分數`
     FROM students s
     RIGHT JOIN scores sc ON s.id = sc.student_id
 """)
@@ -439,7 +485,7 @@ FULL OUTER JOIN 就像把兩邊的資料全部合在一起
 print("\n📌 範例 16: FULL OUTER JOIN - 全部都要")
 
 result = spark.sql("""
-    SELECT s.姓名, sc.科目, sc.分數
+    SELECT s.`姓名`, sc.`科目`, sc.`分數`
     FROM students s
     FULL OUTER JOIN scores sc ON s.id = sc.student_id
 """)
@@ -528,7 +574,7 @@ DISTINCT 就像挑出不一樣的糖果
 
 print("\n📌 範例 19: DISTINCT - 找出所有不同的顏色")
 
-result = spark.sql("SELECT DISTINCT 顏色 FROM toys")
+result = spark.sql("SELECT DISTINCT `顏色` FROM toys")
 result.show()
 
 
@@ -547,7 +593,7 @@ WHERE 就像媽媽說「只能選紅色的玩具」
 
 print("\n📌 範例 20: WHERE - 篩選貴的玩具")
 
-result = spark.sql("SELECT * FROM toys WHERE 價格 > 400")
+result = spark.sql("SELECT * FROM toys WHERE `價格` > 400")
 result.show()
 
 
@@ -566,7 +612,7 @@ ORDER BY 就像把玩具從小排到大，或從高排到低
 
 print("\n📌 範例 21: ORDER BY - 價格排序")
 
-result = spark.sql("SELECT * FROM toys ORDER BY 價格 DESC")
+result = spark.sql("SELECT * FROM toys ORDER BY `價格` DESC")
 result.show()
 
 
@@ -586,9 +632,9 @@ GROUP BY 就像把玩具按顏色分類
 print("\n📌 範例 22: GROUP BY - 依顏色分組計數")
 
 result = spark.sql("""
-    SELECT 顏色, COUNT(*) as 數量
+    SELECT `顏色`, COUNT(*) as `數量`
     FROM toys
-    GROUP BY 顏色
+    GROUP BY `顏色`
 """)
 result.show()
 
@@ -609,9 +655,9 @@ HAVING 就像分組後，只要數量超過某個數字的組
 print("\n📌 範例 23: HAVING - 篩選玩具數量多的顏色")
 
 result = spark.sql("""
-    SELECT 顏色, COUNT(*) as 數量
+    SELECT `顏色`, COUNT(*) as `數量`
     FROM toys
-    GROUP BY 顏色
+    GROUP BY `顏色`
     HAVING COUNT(*) > 1
 """)
 result.show()
@@ -636,7 +682,7 @@ COUNT 就像數有幾個玩具
 
 print("\n📌 範例 24: COUNT - 數玩具總數")
 
-result = spark.sql("SELECT COUNT(*) as 玩具總數 FROM toys")
+result = spark.sql("SELECT COUNT(*) as `玩具總數` FROM toys")
 result.show()
 
 
@@ -655,7 +701,7 @@ SUM 就像把所有玩具的價格加起來
 
 print("\n📌 範例 25: SUM - 計算總價值")
 
-result = spark.sql("SELECT SUM(價格) as 總價值 FROM toys")
+result = spark.sql("SELECT SUM(`價格`) as `總價值` FROM toys")
 result.show()
 
 
@@ -674,7 +720,7 @@ AVG 就像算出玩具的平均價格
 
 print("\n📌 範例 26: AVG - 計算平均價格")
 
-result = spark.sql("SELECT AVG(價格) as 平均價格 FROM toys")
+result = spark.sql("SELECT AVG(`價格`) as `平均價格` FROM toys")
 result.show()
 
 
@@ -693,7 +739,7 @@ MIN 就像找出最便宜的玩具
 
 print("\n📌 範例 27: MIN - 找最低價格")
 
-result = spark.sql("SELECT MIN(價格) as 最低價格 FROM toys")
+result = spark.sql("SELECT MIN(`價格`) as `最低價格` FROM toys")
 result.show()
 
 
@@ -712,7 +758,7 @@ MAX 就像找出最貴的玩具
 
 print("\n📌 範例 28: MAX - 找最高價格")
 
-result = spark.sql("SELECT MAX(價格) as 最高價格 FROM toys")
+result = spark.sql("SELECT MAX(`價格`) as `最高價格` FROM toys")
 result.show()
 
 
@@ -735,7 +781,7 @@ BETWEEN 就像說「我要價格在 300 到 600 之間的玩具」
 
 print("\n📌 範例 29: BETWEEN - 找特定價格範圍的玩具")
 
-result = spark.sql("SELECT * FROM toys WHERE 價格 BETWEEN 300 AND 500")
+result = spark.sql("SELECT * FROM toys WHERE `價格` BETWEEN 300 AND 500")
 result.show()
 
 
@@ -754,7 +800,7 @@ LIKE 就像說「我要找名字裡有『熊』的玩具」
 
 print("\n📌 範例 30: LIKE - 模糊搜尋玩具名稱")
 
-result = spark.sql("SELECT * FROM toys WHERE 名稱 LIKE '%熊%'")
+result = spark.sql("SELECT * FROM toys WHERE `名稱` LIKE '%熊%'")
 result.show()
 
 
@@ -773,7 +819,7 @@ IN 就像說「我要紅色、藍色或綠色的玩具」
 
 print("\n📌 範例 31: IN - 找特定顏色的玩具")
 
-result = spark.sql("SELECT * FROM toys WHERE 顏色 IN ('紅色', '藍色', '粉色')")
+result = spark.sql("SELECT * FROM toys WHERE `顏色` IN ('紅色', '藍色', '粉色')")
 result.show()
 
 
@@ -792,7 +838,7 @@ NOT 就像說「我不要紅色的玩具」
 
 print("\n📌 範例 32: NOT - 排除特定條件")
 
-result = spark.sql("SELECT * FROM toys WHERE NOT 顏色 = '棕色'")
+result = spark.sql("SELECT * FROM toys WHERE NOT `顏色` = '棕色'")
 result.show()
 
 
@@ -818,7 +864,7 @@ toys_with_null = toys_df.union(
 )
 toys_with_null.createOrReplaceTempView("toys_with_null")
 
-result = spark.sql("SELECT * FROM toys_with_null WHERE 顏色 IS NULL")
+result = spark.sql("SELECT * FROM toys_with_null WHERE `顏色` IS NULL")
 result.show()
 
 
@@ -837,7 +883,7 @@ IS NOT NULL 就像確認都有寫好資料
 
 print("\n📌 範例 34: IS NOT NULL - 找完整資料")
 
-result = spark.sql("SELECT * FROM toys_with_null WHERE 顏色 IS NOT NULL")
+result = spark.sql("SELECT * FROM toys_with_null WHERE `顏色` IS NOT NULL")
 result.show()
 
 
@@ -862,7 +908,7 @@ CASE 就像規則：如果價格高就說「貴」，如果低就說「便宜」
 print("\n📌 範例 35: CASE - 價格等級分類")
 
 result = spark.sql("""
-    SELECT 名稱, 價格,
+    SELECT `名稱`, `價格`,
         CASE 
             WHEN 價格 > 500 THEN '昂貴'
             WHEN 價格 >= 300 THEN '中等'
@@ -889,7 +935,7 @@ COALESCE 就像「如果第一個盒子沒有糖果，就看第二個盒子」
 print("\n📌 範例 36: COALESCE - 處理空值")
 
 result = spark.sql("""
-    SELECT 名稱, COALESCE(顏色, '未知') as 顏色
+    SELECT `名稱`, COALESCE(`顏色`, '未知') as 顏色
     FROM toys_with_null
 """)
 result.show()
@@ -915,11 +961,11 @@ EXISTS 就像問「有沒有超過 500 元的玩具？」
 print("\n📌 範例 37: EXISTS - 檢查是否存在")
 
 result = spark.sql("""
-    SELECT DISTINCT 製造商
+    SELECT DISTINCT `製造商`
     FROM toys t1
     WHERE EXISTS (
         SELECT 1 FROM toys t2 
-        WHERE t2.製造商 = t1.製造商 AND t2.價格 > 500
+        WHERE t2.`製造商` = t1.`製造商` AND t2.`價格` > 500
     )
 """)
 result.show()
@@ -941,9 +987,9 @@ ANY/SOME 就像「只要有任何一個超過這個價格就算」
 print("\n📌 範例 38: ANY/SOME - 任一比對")
 
 result = spark.sql("""
-    SELECT 名稱, 價格
+    SELECT `名稱`, `價格`
     FROM toys
-    WHERE 價格 > ANY (SELECT 價格 FROM toys WHERE 顏色 = '藍色')
+    WHERE `價格` > ANY (SELECT 價格 FROM toys WHERE 顏色 = '藍色')
 """)
 result.show()
 
@@ -964,9 +1010,9 @@ ALL 就像「要比所有藍色玩具都貴才算」
 print("\n📌 範例 39: ALL - 全部比對")
 
 result = spark.sql("""
-    SELECT 名稱, 價格
+    SELECT `名稱`, `價格`
     FROM toys
-    WHERE 價格 > ALL (SELECT 價格 FROM toys WHERE 顏色 = '藍色')
+    WHERE `價格` > ALL (SELECT 價格 FROM toys WHERE 顏色 = '藍色')
 """)
 result.show()
 
@@ -995,7 +1041,7 @@ manufacturers_df = spark.createDataFrame(
 manufacturers_df.createOrReplaceTempView("manufacturers")
 
 result = spark.sql("""
-    SELECT t.名稱, m.公司名稱, m.地址
+    SELECT t.`名稱`, m.`公司名稱`, m.`地址`
     FROM toys t
     JOIN manufacturers m ON t.製造商 = m.公司名稱
 """)
@@ -1018,18 +1064,35 @@ PRIMARY KEY 就像每個人都有一個身份證號碼
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，建立一個玩具資料表，
 以 id 作為主鍵（唯一識別碼）。
+
+⚠️ 注意：PySpark DataFrame 沒有內建 PRIMARY KEY 約束
+但可以透過程式邏輯來確保唯一性
 """
 
-print("\n📌 範例 41: PRIMARY KEY - 設定主鍵")
+print("\n📌 範例 41: PRIMARY KEY - 主鍵概念（透過唯一性驗證）")
 
-spark.sql("""
-    CREATE TABLE IF NOT EXISTS toys_pk (
-        id INT NOT NULL,
-        name STRING,
-        PRIMARY KEY (id)
-    )
-""")
-print("✅ 已建立帶主鍵的資料表")
+# 在 PySpark 中，我們透過程式邏輯來確保主鍵唯一性
+toys_with_id = [
+    (1, "小熊"),
+    (2, "機器人"),
+    (3, "芭比娃娃"),
+    # (1, "重複ID")  # 這會違反主鍵唯一性
+]
+
+toys_pk_df = spark.createDataFrame(toys_with_id, ["id", "name"])
+
+# 驗證 id 的唯一性（模擬主鍵檢查）
+total_count = toys_pk_df.count()
+unique_count = toys_pk_df.select("id").distinct().count()
+
+print(f"總記錄數: {total_count}")
+print(f"唯一 ID 數: {unique_count}")
+
+if total_count == unique_count:
+    print("✅ ID 唯一性驗證通過（符合主鍵要求）")
+    toys_pk_df.show()
+else:
+    print("❌ 發現重複的 ID（違反主鍵約束）")
 
 
 # ----------------------------------------------------------------------------
@@ -1046,17 +1109,42 @@ FOREIGN KEY 就像「這個玩具的製造商編號，要在製造商表格裡�
 其中客戶 ID 是外鍵，必須參照客戶資料表。
 """
 
-print("\n📌 範例 42: FOREIGN KEY - 設定外鍵關聯")
+print("\n📌 範例 42: FOREIGN KEY - 外鍵關聯（透過 JOIN 驗證）")
 
-# PySpark SQL 語法示範（實際執行可能因版本而異）
-print("""
-SQL 範例：
-CREATE TABLE orders (
-    order_id INT,
-    customer_id INT,
-    FOREIGN KEY (customer_id) REFERENCES customers(id)
-)
-""")
+# 在 PySpark 中，我們透過 JOIN 來確保外鍵關聯的正確性
+customers_data = [
+    (1, "王小明"),
+    (2, "李小華"),
+    (3, "張小美")
+]
+customers_df = spark.createDataFrame(customers_data, ["id", "name"])
+
+orders_data = [
+    (101, 1, "訂單A"),  # customer_id = 1 存在
+    (102, 2, "訂單B"),  # customer_id = 2 存在
+    (103, 1, "訂單C"),  # customer_id = 1 存在
+    # (104, 99, "訂單D")  # customer_id = 99 不存在，違反外鍵約束
+]
+orders_df = spark.createDataFrame(orders_data, ["order_id", "customer_id", "description"])
+
+# 驗證外鍵完整性（使用 LEFT JOIN 檢查）
+validation_df = orders_df.join(
+    customers_df, 
+    orders_df.customer_id == customers_df.id, 
+    "left"
+).filter(customers_df.id.isNull())
+
+print("檢查外鍵約束...")
+invalid_count = validation_df.count()
+
+if invalid_count == 0:
+    print("✅ 外鍵完整性驗證通過")
+    print("\n訂單與客戶關聯：")
+    orders_df.join(customers_df, orders_df.customer_id == customers_df.id) \
+        .select(orders_df.order_id, customers_df.name, orders_df.description) \
+        .show()
+else:
+    print(f"❌ 發現 {invalid_count} 筆無效的外鍵參照")
 
 
 # ----------------------------------------------------------------------------
@@ -1207,19 +1295,44 @@ SAVEPOINT 就像玩遊戲時設定多個存檔點
 
 🎯 AI Prompt 範例：
 請幫我寫一個 PySpark 程式，示範如何在交易中設定多個儲存點。
+
+⚠️ 注意：PySpark 不支援傳統資料庫的 SAVEPOINT 概念
+在 PySpark 中，我們使用版本控制或快照來達到類似效果
 """
 
-print("\n📌 範例 48: SAVEPOINT - 設定儲存點")
+print("\n📌 範例 48: SAVEPOINT - 儲存點概念（使用快照替代）")
 
-# 模擬多個檢查點
-checkpoint_1 = toys_df.checkpoint()
-print("✅ 儲存點 1 已建立")
+# 在 PySpark 中，我們使用變數保存不同階段的 DataFrame
+# 這類似於設定多個「儲存點」
 
-# 繼續操作...
-checkpoint_2 = toys_df.union(new_df).checkpoint()
-print("✅ 儲存點 2 已建立")
+# 儲存點 1：原始資料
+savepoint_1 = toys_df
+print("✅ 儲存點 1：原始玩具資料")
+print(f"   記錄數：{savepoint_1.count()}")
 
-print("可以隨時回到任一個儲存點！")
+# 執行一些操作
+filtered_df = toys_df.filter(col("價格") > 300)
+
+# 儲存點 2：過濾後的資料
+savepoint_2 = filtered_df
+print("✅ 儲存點 2：過濾後的資料")
+print(f"   記錄數：{savepoint_2.count()}")
+
+# 如果需要回到某個儲存點，直接使用該變數
+print("\n💡 回到儲存點 1：")
+savepoint_1.show(3)
+
+print("""
+在傳統 SQL 中：
+  SAVEPOINT sp1;
+  -- 執行操作
+  SAVEPOINT sp2;
+  -- 可以 ROLLBACK TO sp1;
+
+在 PySpark 中：
+  使用變數保存不同階段的 DataFrame
+  或使用 Delta Lake 的時間旅行功能
+""")
 
 
 # ============================================================================
