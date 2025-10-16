@@ -2,6 +2,7 @@
 # %% [md]
 ## PySpark SQL 進階教學 🚀
 # 
+
 # 這份教學專為已經掌握 SQL 基礎的你設計！
 # 我們將深入探討進階的 SQL 技巧，包括視窗函數、CTE、效能優化等主題。
 # 讓你的 SQL 技能更上一層樓！✨
@@ -74,7 +75,6 @@ result.orderBy("部門", "部門排名").show()
 # SQL 寫法
 employees_df.createOrReplaceTempView("employees")
 
-# %%
 sql_result = spark.sql("""
     SELECT 
         `員工編號`,
@@ -195,7 +195,6 @@ result.show()
 # %% [md]
 ### 📚 第二章：通用表表達式 (Common Table Expressions - CTE)
 
-# %% [md]
 #### 5️⃣ WITH 子句 - 建立臨時結果集
 # 🎈 概念解釋：
 # CTE (WITH 子句) 讓你建立臨時的命名結果集，提高查詢的可讀性和可維護性。
@@ -206,8 +205,6 @@ result.show()
 # 2. 可重複使用
 # 3. 便於除錯
 # 4. 支援遞迴查詢
-
-
 
 ##### 📌 範例 5: CTE - 簡化複雜查詢
 
@@ -262,8 +259,6 @@ sql_with_cte.show()
 # 
 # 🎯 應用場景：
 # 多步驟的資料轉換、複雜的業務指標計算
-
-
 
 ##### 📌 範例 6: 多層 CTE - 客戶分級分析
 
@@ -321,8 +316,6 @@ sql_multi_cte.show()
 # 🎯 優化建議：
 # 盡量使用 JOIN 或視窗函數替代相關子查詢
 
-
-
 ##### 📌 範例 7: 子查詢優化 - 找出高於部門平均薪資的員工
 
 # %%
@@ -379,15 +372,13 @@ result_window.show()
 # %% [md]
 ### 📚 第四章：進階 JOIN 技巧
 
-# %% [md]
+
 #### 8️⃣ CROSS JOIN - 笛卡爾積
 # 🎈 概念解釋：
 # CROSS JOIN 產生兩個表的笛卡爾積，即所有可能的組合。
 # 
 # 🎯 應用場景：
 # 生成測試資料、建立時間序列、產生所有可能的組合
-
-
 
 ##### 📌 範例 8: CROSS JOIN - 產生所有可能的配對
 
@@ -402,15 +393,13 @@ cross_result = products.crossJoin(colors)
 
 cross_result.show()
 
-# %% \[md]
+# %% [md]
 #### 9️⃣ SELF JOIN - 自我連接
 # 🎈 概念解釋：
 # SELF JOIN 是表與自己進行連接，常用於查找層級關係或比較同表內的記錄。
 # 
 # 🎯 應用場景：
 # 員工-主管關係、組織架構、尋找重複記錄
-
-
 
 ##### 📌 範例 9: SELF JOIN - 員工與主管關係
 
@@ -445,8 +434,8 @@ sql_self_join = spark.sql("""
 
 sql_self_join.show()
 
-
-# 🔟 ANTI JOIN & SEMI JOIN - 高效過濾
+# %% [md]
+#### 🔟 ANTI JOIN & SEMI JOIN - 高效過濾
 
 # 🎈 概念解釋：
 # - SEMI JOIN (LEFT SEMI): 返回左表中在右表中有匹配的記錄
@@ -454,8 +443,6 @@ sql_self_join.show()
 # 
 # 🎯 優勢：
 # 比 IN / NOT IN 子查詢效能更好
-
-
 
 ##### 📌 範例 10: ANTI JOIN & SEMI JOIN - 客戶訂單分析
 
@@ -496,7 +483,7 @@ customers_without_orders.show()
 
 # %% [md]
 ### 📚 第五章：效能優化技巧
-# 1️⃣1️⃣ Broadcast Join - 廣播小表
+#### 1️⃣1️⃣ Broadcast Join - 廣播小表
 
 # 🎈 概念解釋：
 # 當一個大表和一個小表進行 JOIN 時，可以將小表廣播到所有節點，
@@ -504,8 +491,6 @@ customers_without_orders.show()
 # 
 # 🎯 適用場景：
 # 小表 < 10MB，大表與維度表 JOIN
-
-
 
 ##### 📌 範例 11: Broadcast Join - 優化大小表連接
 
@@ -537,8 +522,8 @@ broadcast_join.select("姓名", "部門", "辦公地點").show(5)
 print("一般 JOIN 會有 SortMergeJoin")
 print("Broadcast JOIN 會有 BroadcastHashJoin")
 
-
-# 1️⃣2️⃣ 分區與分桶 - 資料組織優化
+# %% [md]
+#### 1️⃣2️⃣ 分區與分桶 - 資料組織優化
 
 # 🎈 概念解釋：
 # - Partitioning: 按欄位值將資料分割成多個目錄
@@ -546,8 +531,6 @@ print("Broadcast JOIN 會有 BroadcastHashJoin")
 # 
 # 🎯 優勢：
 # 減少掃描的資料量，提升查詢效能
-
-
 
 ##### 📌 範例 12: 分區與過濾優化
 
@@ -561,16 +544,15 @@ employees_partitioned = employees_df.repartition(2, "部門")
 filtered = employees_partitioned.filter(col("部門") == "工程部")
 filtered.show()
 
+# %% [md]
 
-# 1️⃣3️⃣ 快取與持久化 - 避免重複計算
+#### 1️⃣3️⃣ 快取與持久化 - 避免重複計算
 
 # 🎈 概念解釋：
 # 將常用的 DataFrame 快取到記憶體中，避免重複計算。
 # 
 # 🎯 適用場景：
 # 多次使用相同的中間結果、迭代計算
-
-
 
 ##### 📌 範例 13: 快取優化
 
@@ -603,15 +585,13 @@ complex_df.unpersist()
 
 # %% [md]
 ### 📚 第六章：複雜資料轉換
-# 1️⃣4️⃣ PIVOT - 行轉列
+#### 1️⃣4️⃣ PIVOT - 行轉列
 
 # 🎈 概念解釋：
 # PIVOT 將行資料轉換為列，常用於建立交叉表。
 # 
 # 🎯 應用場景：
 # 銷售報表、資料透視表、趨勢分析
-
-
 
 ##### 📌 範例 14: PIVOT - 建立部門薪資透視表
 
@@ -634,16 +614,15 @@ pivot_result = spark.sql("""
 
 pivot_result.show()
 
+# %% [md]
 
-# 1️⃣5️⃣ UNPIVOT - 列轉行
+#### 1️⃣5️⃣ UNPIVOT - 列轉行
 
 # 🎈 概念解釋：
 # UNPIVOT 將列資料轉換為行，是 PIVOT 的反向操作。
 # 
 # 🎯 應用場景：
 # 將寬表轉換為長表、資料正規化
-
-
 
 ##### 📌 範例 15: UNPIVOT - 列轉行
 
@@ -665,16 +644,15 @@ unpivot_result = quarterly_sales.selectExpr(
 
 unpivot_result.show()
 
+# %% [md]
 
-# 1️⃣6️⃣ 陣列與結構處理
+#### 1️⃣6️⃣ 陣列與結構處理
 
 # 🎈 概念解釋：
 # PySpark 支援複雜的資料型態如陣列、結構體、地圖等。
 # 
 # 🎯 應用場景：
 # 處理 JSON 資料、巢狀結構、多值欄位
-
-
 
 ##### 📌 範例 16: 陣列操作
 
@@ -716,15 +694,13 @@ array_operations.show(truncate=False)
 
 # %% [md]
 ### 📚 第七章：資料品質與清理
-# 1️⃣7️⃣ 處理 NULL 值
+#### 1️⃣7️⃣ 處理 NULL 值
 
 # 🎈 概念解釋：
 # NULL 值處理是資料清理的重要環節。
 # 
 # 🎯 常用方法：
 # fillna, dropna, coalesce, nvl
-
-
 
 ##### 📌 範例 17: NULL 值處理
 
@@ -769,16 +745,15 @@ coalesced = df_null.select(
 
 coalesced.show()
 
+# %% [md]
 
-# 1️⃣8️⃣ 資料去重
+#### 1️⃣8️⃣ 資料去重
 
 # 🎈 概念解釋：
 # 找出並移除重複的記錄。
 # 
 # 🎯 方法：
 # distinct, dropDuplicates, 視窗函數
-
-
 
 ##### 📌 範例 18: 資料去重
 
@@ -818,15 +793,13 @@ dedup_window.show()
 
 # %% [md]
 ### 📚 第八章：進階分析函數
-# 1️⃣9️⃣ NTILE - 資料分組
+#### 1️⃣9️⃣ NTILE - 資料分組
 
 # 🎈 概念解釋：
 # NTILE 將資料分成 N 個大致相等的組。
 # 
 # 🎯 應用場景：
 # 客戶分層、ABC 分析、分位數分析
-
-
 
 ##### 📌 範例 19: NTILE - 薪資四分位數
 
@@ -847,16 +820,15 @@ ntile_result = employees_df.withColumn(
 
 ntile_result.orderBy("薪資").show()
 
+# %% [md]
 
-# 2️⃣0️⃣ PERCENT_RANK - 百分位排名
+#### 2️⃣0️⃣ PERCENT_RANK - 百分位排名
 
 # 🎈 概念解釋：
 # PERCENT_RANK 計算值在資料集中的相對位置（0 到 1 之間）。
 # 
 # 🎯 應用場景：
 # 績效評估、成績分析、相對排名
-
-
 
 ##### 📌 範例 20: PERCENT_RANK - 薪資百分位
 
@@ -877,9 +849,6 @@ percent_result = employees_df.withColumn(
 )
 
 percent_result.orderBy("薪資").select("姓名", "薪資", "薪資百分位", "說明").show()
-
-
-# 🎓 課程總結
 
 # %% [md]
 ## 🎓 課程總結
@@ -941,4 +910,4 @@ percent_result.orderBy("薪資").select("姓名", "薪資", "薪資百分位", "
 # 關閉 Spark Session
 
 # %%
-# spark.stop()  # 取消註解以關閉 Spark
+spark.stop()
